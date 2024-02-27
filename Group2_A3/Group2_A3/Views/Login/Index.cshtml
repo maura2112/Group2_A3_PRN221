@@ -1,25 +1,43 @@
-﻿@page "/login"
+﻿
 @model IEnumerable<Group2_A3.Models.Member>
 
 @{
     ViewData["Title"] = "Login";
 }
-
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+}
+@if (TempData.ContainsKey("ErrorMessage"))
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
 <h1>Login</h1>
 
-<form method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <div class="form-group">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+<div class="col-lg-6 mb-5 mb-lg-0 position-relative">
+    <div id="radius-shape-1" class="position-absolute rounded-circle shadow-5-strong"></div>
+    <div id="radius-shape-2" class="position-absolute shadow-5-strong"></div>
+
+    <div class="card bg-glass">
+        <div class="card-body px-4 py-5 px-md-5">
+            <form method="post" asp-controller="Login" asp-action="Login">
+                <!-- Email input -->
+                <div class="form-outline mb-4">
+                    <input type="text" id="form3Example3" class="form-control" name="email" />
+                    <label class="form-label" for="form3Example3">Email</label>
+                </div>
+                <!-- Password input -->
+                <div class="form-outline mb-4">
+                    <input type="password" id="form3Example4" class="form-control" name="password" />
+                    <label class="form-label" for="form3Example4">Password</label>
+                </div>
+
+                <!-- Submit button -->
+                <button type="submit" class="btn btn-primary">
+                    Login
+                </button>
+            </form>
+        </div>
     </div>
-    <div class="form-group">
-        <label asp-for="Password"></label>
-        <input asp-for="Password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
+</div>
 
 

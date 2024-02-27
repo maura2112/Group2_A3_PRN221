@@ -3,20 +3,29 @@
 @{
     ViewData["Title"] = "Index";
 }
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    var isDefaultAdmin = HttpContextAccessor.HttpContext?.Session?.GetString("IsDefaultAdmin") == "true";
+    var isLoggedIn = HttpContextAccessor.HttpContext?.Session?.GetString("IsLoggedIn") == "true";
+    var memberId = HttpContextAccessor.HttpContext?.Session?.GetInt32("LoggedInMemberId");
 
+}
 <h1>Index</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
 </p>
+@if (isDefaultAdmin && isLoggedIn)
+{
+    <form id="searchForm">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate">
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" name="endDate">
+        <button type="button" onclick="searchOrders()">Search</button>
+    </form>
+}
 
-<form id="searchForm">
-    <label for="startDate">Start Date:</label>
-    <input type="date" id="startDate" name="startDate">
-    <label for="endDate">End Date:</label>
-    <input type="date" id="endDate" name="endDate">
-    <button type="button" onclick="searchOrders()">Search</button>
-</form>
 
 <table class="table">
     <thead>
@@ -42,48 +51,94 @@
     <tbody id="membersTableBody">
     </tbody>
 </table>
+@if (isDefaultAdmin && isLoggedIn)
+{
+    <script>
 
-<script>
-    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
-    connection.start().catch(err => alert(err));
+        var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+        connection.start().catch(err => alert(err));
 
-    connection.on("GetOrders", function () {
-        searchOrders();
-    });
+        connection.on("GetOrders", function () {
+            searchOrders();
+        });
 
-    function searchOrders() {
-        var startDate = document.getElementById("startDate").value;
-        var endDate = document.getElementById("endDate").value;
+        function searchOrders() {
+            var startDate = document.getElementById("startDate").value;
+            var endDate = document.getElementById("endDate").value;
 
-        var url = "http://localhost:5011/Orders/GetOrders";
+            var url = "http://localhost:5011/Orders/GetOrders";
 
-        if (startDate && endDate) {
-            url += "?startDate=" + startDate + "&endDate=" + endDate;
+            if (startDate && endDate) {
+                url += "?startDate=" + startDate + "&endDate=" + endDate;
+            }
+
+            var tbody = document.getElementById("membersTableBody");
+            tbody.innerHTML = "";
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(item => {
+                        let html = `
+                <tr>
+                <td>${item.orderDate}</td>
+                <td>${item.requiredDate}</td>
+                <td>${item.shippedDate}</td>
+                <td>${item.freight}</td>
+                <td>${item.memberId}</td>
+                <td>
+                <a href="/Orders/Edit/${item.orderId}">Edit</a>
+                <a href="/Orders/Delete/${item.orderId}">Delete</a>
+                <a href="/OrderDetails?id=${item.orderId}">Details</a>
+                </td>
+                </tr>`;
+                        tbody.innerHTML += html;
+                    });
+                })
+                .catch(err => alert(err));
         }
+    </script>
+}
+@if (isLoggedIn && !isDefaultAdmin)
+{
+    <script>
+        
+                var memId = @memberId
+            ShowOrders();
+                var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+        connection.start().catch(err => alert(err));
 
-        var tbody = document.getElementById("membersTableBody");
-        tbody.innerHTML = "";
+        connection.on("GetOrdersById", function () {
+            ShowOrders();
+        });
 
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                data.forEach(item => {
-                    let html = `
-                            <tr>
-                                <td>${item.orderDate}</td>
-                                <td>${item.requiredDate}</td>
-                                <td>${item.shippedDate}</td>
-                                <td>${item.freight}</td>
-                                <td>${item.memberId}</td>
-                                <td>
-                                    <a href="/Orders/Edit/${item.orderId}">Edit</a>
-                                    <a href="/Orders/Delete/${item.orderId}">Delete</a>
-                                    <a href="/OrderDetails?id=${item.orderId}">Details</a>
-                                </td>
-                            </tr>`;
-                    tbody.innerHTML += html;
-                });
-            })
-            .catch(err => alert(err));
-    }
-</script>
+        function ShowOrders() {
+            var url = "http://localhost:5011/Orders/GetOrdersById?memberId=" + memId;
+            var tbody = document.getElementById("membersTableBody");
+            tbody.innerHTML = "";
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(item => {
+                        let html = `
+                        <tr>
+                        <td>${item.orderDate}</td>
+                        <td>${item.requiredDate}</td>
+                        <td>${item.shippedDate}</td>
+                        <td>${item.freight}</td>
+                        <td>${item.memberId}</td>
+                        <td>
+                        <a href="/Orders/Edit/${item.orderId}">Edit</a>
+                        <a href="/Orders/Delete/${item.orderId}">Delete</a>
+                        <a href="/OrderDetails?id=${item.orderId}">Details</a>
+                        </td>
+                        </tr>`;
+                        tbody.innerHTML += html;
+                    });
+                })
+                .catch(err => alert(err));
+        }
+    </script>
+}
+

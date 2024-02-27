@@ -176,7 +176,6 @@ namespace Group2_A3.Controllers
             {
                 _context.Members.Remove(member);
             }
-            
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("GetMembers");
             return RedirectToAction(nameof(Index));

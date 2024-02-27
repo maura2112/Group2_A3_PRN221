@@ -47,6 +47,11 @@ namespace Group2_A3.Controllers
 
             return Ok(orders);
         }
+        public IActionResult GetOrdersById(int memberId)
+        {
+            List<Order> orders = _context.Orders.Where(x=>x.MemberId == memberId).ToList();
+            return Ok(orders);
+        }
 
         // GET: Orders/Details/5
         public async Task<IActionResult> Details(int? id)
