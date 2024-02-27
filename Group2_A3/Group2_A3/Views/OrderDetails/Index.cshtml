@@ -1,0 +1,78 @@
+﻿@model IEnumerable<Group2_A3.Models.OrderDetail>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UnitPrice)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Quantity)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Discount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Order)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Product)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="membersTableBody">
+    </tbody>
+</table>
+<script>
+    // Lấy đối tượng URLSearchParams từ đường link hiện tại
+    var searchParams = new URLSearchParams(window.location.search);
+
+    // Lấy giá trị của tham số id từ URLSearchParams
+    var id = searchParams.get('id');
+    ShowOrderDetails(id);
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+    connection.start()
+        .catch(err => alert(err));
+    connection.on("GetOrderDetails", function () {
+        //ShowOrderDetails();
+        window.location.href = "/Orders";
+    });
+
+    function ShowOrderDetails(id = "") {
+        var tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        fetch("http://localhost:5011/OrderDetails/GetOrderDetails?id=" + id)
+            .then(res => res.json())
+            .then(data => data.forEach(item => {
+                let html = `
+                            <tr>
+                                <td>${item.unitPrice}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.discount}</td>
+                                <td>${item.orderId}</td>
+                                <td>${item.productId}</td>
+
+                                <td>
+                                        <a href="/OrderDetails/Edit/${item.orderDetailId}">Edit</a>
+                                        <a href="/OrderDetails/Delete/${item.orderDetailId}">Delete</a>
+                                        <a href="/OrderDetails/Details/${item.orderDetailId}">Details</a>
+                                </td>
+                            </tr>
+                        `;
+                tbody.innerHTML += html;
+            }))
+            .catch(err => alert(err));
+    }
+</script>

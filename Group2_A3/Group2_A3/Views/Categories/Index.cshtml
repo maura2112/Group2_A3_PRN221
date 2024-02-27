@@ -1,0 +1,60 @@
+﻿@model IEnumerable<Group2_A3.Models.Category>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.CategoryId)
+            </th>
+
+            <th>
+                @Html.DisplayNameFor(model => model.CategoryName)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+<script>
+    ShowCategories();
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+    connection.start()
+        .catch(err => alert(err));
+    connection.on("GetCategories", function () {
+        ShowCategories();
+    });
+    function ShowCategories() {
+        var tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        fetch("http://localhost:5011/Categories/GetCategories")
+            .then(res => res.json())
+            .then(data => data.forEach(item => {
+                let html = `
+                                <tr>
+                                    <td>${item.categoryId}</td>
+                                    <td>${item.categoryName}</td>
+                                    <td>
+                                        <a href = "/Categories/Edit/${item.categoryId}">Edit</a>
+                                        <a href = "/Categories/Delete/${item.categoryId}">Delete</a>
+                                        <a href = "/Categories/Details/${item.categoryId}">Details</a>
+                                    </td>
+                                </tr>
+                            `;
+                tbody.innerHTML += html;
+            }))
+            .catch(err => alert(err));
+    }
+</script>

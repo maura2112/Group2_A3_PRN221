@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Group2_A3.Models.Member>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<br />
+<form id="searchForm">
+    <label for="searchEmail">Search by Email:</label>
+    <input type="text" id="searchEmail" name="email" />
+    <button type="button" onclick="searchMembers()">Search</button> <!-- Gọi hàm searchMembers khi nhấn nút Search -->
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CompanyName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.City)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Country)
+            </th>
+
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="membersTableBody">
+        <!-- Thêm id cho tbody -->
+    </tbody>
+</table>
+<script>
+    var searchEmailInput = document.getElementById("searchEmail"); // Lấy thẻ input
+
+    function searchMembers() {
+        var searchEmail = searchEmailInput.value; // Lấy giá trị từ input
+        ShowMembers(searchEmail); // Gọi hàm ShowMembers với tham số searchEmail
+    }
+
+    ShowMembers(); // Gọi hàm ShowMembers ban đầu
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+    connection.start()
+        .catch(err => alert(err));
+    connection.on("GetMembers", function () {
+        ShowMembers();
+    });
+
+    function ShowMembers(searchEmail = "") {
+        var tbody = document.getElementById("membersTableBody"); // Sử dụng id thay vì querySelector
+        tbody.innerHTML = "";
+
+        fetch("http://localhost:5011/Members/GetMembers?Email=" + searchEmail)
+            .then(res => res.json())
+            .then(data => data.forEach(item => {
+                let html = `
+                        <tr>
+                            <td>${item.email}</td>
+                            <td>${item.companyName}</td>
+                            <td>${item.city}</td>
+                            <td>${item.country}</td>
+
+                            <td>
+                                <a href="/Members/Edit/${item.memberId}">Edit</a>
+                                <a href="/Members/Delete/${item.memberId}">Delete</a>
+                                <a href="/Members/Details/${item.memberId}">Details</a>
+                            </td>
+                        </tr>
+                    `;
+                tbody.innerHTML += html;
+            }))
+            .catch(err => alert(err));
+    }
+</script>

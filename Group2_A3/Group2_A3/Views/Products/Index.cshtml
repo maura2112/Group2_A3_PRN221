@@ -1,0 +1,110 @@
+﻿@model IEnumerable<Group2_A3.Models.Product>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<form id="searchForm">
+    <div>
+        <label for="searchUnitPrice">Search by Unit Price:</label>
+        <input type="text" id="searchUnitPrice" name="unitPrice" />
+    </div>
+    <div>
+        <label for="searchName">Search by Name:</label>
+        <input type="text" id="searchName" name="name" />
+    </div>
+    <button type="button" onclick="searchProducts()">Search</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Weight)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UnitPrice)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UnitInStock)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    // Hiển thị tất cả sản phẩm khi trang được tải
+    document.addEventListener("DOMContentLoaded", function () {
+        // Kiểm tra nếu trang được truy cập qua phương thức GET
+        if (window.location.search === "") {
+            // Truy cập link như đã ấn nút Search với cả hai trường là null
+            searchProducts();
+        }
+    });
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+    connection.start()
+        .catch(err => alert(err));
+    connection.on("GetProducts", function () {
+        searchProducts();
+    });
+
+    function searchProducts() {
+        var unitPrice = document.getElementById("searchUnitPrice").value;
+        var name = document.getElementById("searchName").value;
+
+        // Kiểm tra nếu cả hai trường đều trống
+        if (!unitPrice && !name) {
+            // Lấy tất cả sản phẩm
+            fetch("http://localhost:5011/Products/GetProducts")
+                .then(res => res.json())
+                .then(data => displayProducts(data))
+                .catch(err => alert(err));
+        } else {
+            // Nếu ít nhất một trong hai trường có giá trị, gửi yêu cầu tìm kiếm
+            var url = `http://localhost:5011/Products/GetProducts?unitPrice=${unitPrice}&name=${name}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => displayProducts(data))
+                .catch(err => alert(err));
+        }
+    }
+
+    function displayProducts(data) {
+        var tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        data.forEach(item => {
+            let html = `
+                    <tr>
+                        <td>${item.productName}</td>
+                        <td>${item.weight}</td>
+                        <td>${item.unitPrice}</td>
+                        <td>${item.unitInStock}</td>
+                        <td>${item.category.categoryName}</td>
+                        <td>
+                            <a href="/Products/Edit/${item.productId}">Edit</a>
+                            <a href="/Products/Delete/${item.productId}">Delete</a>
+                            <a href="/Products/Details/${item.productId}">Details</a>
+                        </td>
+                    </tr>
+                `;
+            tbody.innerHTML += html;
+        });
+    }
+</script>

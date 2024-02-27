@@ -1,0 +1,89 @@
+﻿@model IEnumerable<Group2_A3.Models.Order>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<form id="searchForm">
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" name="startDate">
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" name="endDate">
+    <button type="button" onclick="searchOrders()">Search</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.RequiredDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShippedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Freight)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Member)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="membersTableBody">
+    </tbody>
+</table>
+
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRServer").build();
+    connection.start().catch(err => alert(err));
+
+    connection.on("GetOrders", function () {
+        searchOrders();
+    });
+
+    function searchOrders() {
+        var startDate = document.getElementById("startDate").value;
+        var endDate = document.getElementById("endDate").value;
+
+        var url = "http://localhost:5011/Orders/GetOrders";
+
+        if (startDate && endDate) {
+            url += "?startDate=" + startDate + "&endDate=" + endDate;
+        }
+
+        var tbody = document.getElementById("membersTableBody");
+        tbody.innerHTML = "";
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(item => {
+                    let html = `
+                            <tr>
+                                <td>${item.orderDate}</td>
+                                <td>${item.requiredDate}</td>
+                                <td>${item.shippedDate}</td>
+                                <td>${item.freight}</td>
+                                <td>${item.memberId}</td>
+                                <td>
+                                    <a href="/Orders/Edit/${item.orderId}">Edit</a>
+                                    <a href="/Orders/Delete/${item.orderId}">Delete</a>
+                                    <a href="/OrderDetails?id=${item.orderId}">Details</a>
+                                </td>
+                            </tr>`;
+                    tbody.innerHTML += html;
+                });
+            })
+            .catch(err => alert(err));
+    }
+</script>
